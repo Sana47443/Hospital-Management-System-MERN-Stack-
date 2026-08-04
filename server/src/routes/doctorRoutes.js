@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { protect, authorize } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import * as c from '../controllers/doctorController.js';
+const router = Router();
+const body = z.object({ employeeId:z.string().min(2), firstName:z.string().min(1), lastName:z.string().min(1), specialization:z.string().min(2), department:z.string().min(2), phone:z.string().min(5), email:z.string().email(), licenseNumber:z.string().min(2), consultationFee:z.coerce.number().min(0).optional(), schedule:z.array(z.object({day:z.coerce.number().int().min(0).max(6), start:z.string(), end:z.string()})).optional(), active:z.boolean().optional() });
+router.use(protect);
+router.get('/', c.listDoctors); router.get('/:id', c.getDoctor);
+router.post('/', authorize('admin'), validate(z.object({body,params:z.any(),query:z.any()})), c.createDoctor);
+router.put('/:id', authorize('admin'), validate(z.object({body:body.partial(),params:z.any(),query:z.any()})), c.updateDoctor);
+router.delete('/:id', authorize('admin'), c.deleteDoctor);
+export default router;

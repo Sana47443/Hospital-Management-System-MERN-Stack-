@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { protect, authorize } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import * as c from '../controllers/appointmentController.js';
+const router=Router();
+const body=z.object({ patient:z.string().min(1), doctor:z.string().min(1), startTime:z.coerce.date(), endTime:z.coerce.date(), reason:z.string().min(2).max(500), notes:z.string().max(3000).optional(), status:z.enum(['scheduled','checked-in','in-progress','completed','cancelled','no-show']).optional(), cancellationReason:z.string().optional() });
+router.use(protect);
+router.get('/', c.listAppointments);
+router.post('/', authorize('admin','receptionist'), validate(z.object({body,params:z.any(),query:z.any()})), c.createAppointment);
+router.put('/:id', validate(z.object({body:body.partial(),params:z.any(),query:z.any()})), c.updateAppointment);
+router.delete('/:id', authorize('admin','receptionist'), c.deleteAppointment);
+export default router;
